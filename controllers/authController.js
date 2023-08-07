@@ -2,6 +2,7 @@ const User = require("../models/User");
 const { StatusCodes } = require("http-status-codes");
 const CustomError = require("../errors");
 const { attachCookiesToResponse, createTokenUser } = require("../utils");
+const crypto = require("crypto");
 
 const register = async (req, res) => {
   const { email, name, password } = req.body;
@@ -15,7 +16,7 @@ const register = async (req, res) => {
   const isFirstAccount = (await User.countDocuments({})) === 0;
   const role = isFirstAccount ? "admin" : "user";
 
-  const verificationToken = "fake-token";
+  const verificationToken = crypto.randomBytes(40).toString("hex");
 
   const user = await User.create({
     name,
@@ -30,6 +31,14 @@ const register = async (req, res) => {
     verificationToken: user.verificationToken,
   });
 };
+
+// Email verification
+const verifyEmail = async (req, res) => {
+  const { verificationToken, email } = req.body;
+
+  res.status(StatusCodes.OK).json({ verificationToken, email });
+};
+
 const login = async (req, res) => {
   const { email, password } = req.body;
 
@@ -67,4 +76,5 @@ module.exports = {
   register,
   login,
   logout,
+  verifyEmail,
 };
